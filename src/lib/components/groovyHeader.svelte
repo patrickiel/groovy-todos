@@ -18,19 +18,14 @@
 <div class="flex items-center justify-center">
 	<span>
 		{#each text.split('') as char, index}
-			<span class="groovyHeader text-4xl font-bold" style="color: hsl({hues[index]}, 100%, 50%)"
-				>{char}</span
-			>
+			<span class="groovyHeader text-7xl" style="color: hsl({hues[index]}, 100%, 50%)">{char}</span>
 		{/each}
 	</span>
-	<div class="w-8 flex-shrink"></div>
 	<PeaceSign size={140} color={`hsl(${shift}, 100%, 50%)`} />
 </div>
 
 <style>
 	.groovyHeader {
 		font-family: 'Spicy Rice';
-		line-height: 5.5rem;
-		font-size: 5rem;
 	}
 </style>

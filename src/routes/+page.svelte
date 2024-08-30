@@ -69,7 +69,7 @@
 </script>
 
 <div class="hippie-bg min-h-screen">
-	<main class="container mx-auto flex max-w-md flex-col p-4">
+	<main class="container mx-auto flex max-w-md flex-col">
 		{#if isAdminToolVisible}
 			<div class="mb-4 flex flex-row gap-2" onsubmit={addTodo}>
 				<input id="numberOfItems" class="w-full border border-gray-300 p-2" type="text" />
@@ -86,7 +86,7 @@
 			</div>
 		{/if}
 
-		<div class="py-10">
+		<div class="py-8">
 			<GroovyHeader text="Groovy TODOs" />
 		</div>
 		<form
