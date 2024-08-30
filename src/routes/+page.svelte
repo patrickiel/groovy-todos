@@ -69,7 +69,7 @@
 </script>
 
 <div class="hippie-bg min-h-screen">
-	<main class="container mx-auto flex max-w-md flex-col">
+	<main class="mx-auto flex max-w-md flex-col p-4">
 		{#if isAdminToolVisible}
 			<div class="mb-4 flex flex-row gap-2" onsubmit={addTodo}>
 				<input id="numberOfItems" class="w-full border border-gray-300 p-2" type="text" />
