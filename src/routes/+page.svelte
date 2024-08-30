@@ -3,22 +3,19 @@
 	import '../app.css';
 	import { nanoid } from 'nanoid';
 	import { fade, slide } from 'svelte/transition';
-	import { Trash2, GripVertical, X, CirclePlus, ChevronDown } from 'lucide-svelte';
+	import { Trash2, GripVertical, X, CirclePlus, Menu, ChevronDown, QrCode } from 'lucide-svelte';
 	import GroovyHeader from '$lib/components/groovyHeader.svelte';
 	import Checkbox from '$lib/components/checkbox.svelte';
+	import DumbQrCode from '$lib/components/dumbQrCode.svelte';
 
-	type Todo = {
-		id: string;
-		text: string;
-		completed: boolean;
-	};
-
+	let qrCodeIsVisible = $state(false);
 	let input = $state(new LocalStore('input', ''));
-	let focusedTodo = $state<Todo>();
+	let focusedTodo = $state<TodoItem>();
 	let isAdminToolVisible = $state(false);
-	let all = $state(new LocalStore<Todo[]>('todos', []));
-	let active = $derived<Todo[]>(all.value.filter((todo) => !todo.completed));
-	let completed = $derived<Todo[]>(all.value.filter((todo) => todo.completed));
+	const listId = 'gI_s3jzlll3U_jpLqiYPM';
+	let list = $state(new LocalStore<TodoList>('list1', { todos: [], id: listId }));
+	let active = $derived<TodoItem[]>(list.value.todos.filter((todo) => !todo.completed));
+	let completed = $derived<TodoItem[]>(list.value.todos.filter((todo) => todo.completed));
 
 	let inputElement: HTMLInputElement;
 
@@ -29,24 +26,27 @@
 
 		if (input.value.trim()) {
 			let newTodo = { id: nanoid(), text: input.value, completed: false };
-			all.value = [newTodo, ...all.value];
+			list.value.todos = [newTodo, ...list.value.todos];
 			input.value = '';
 			inputElement?.focus();
 		}
 	}
 
 	function deleteTodo(id: string) {
-		all.value = all.value.filter((todo) => todo.id !== id);
+		list.value.todos = list.value.todos.filter((todo) => todo.id !== id);
 	}
 
 	function toggleTodo(id: string) {
-		const todoIndex = all.value.findIndex((todo) => todo.id === id);
+		const todoIndex = list.value.todos.findIndex((todo) => todo.id === id);
 		if (todoIndex !== -1) {
-			const updatedTodo = { ...all.value[todoIndex], completed: !all.value[todoIndex].completed };
-			all.value = [
+			const updatedTodo = {
+				...list.value.todos[todoIndex],
+				completed: !list.value.todos[todoIndex].completed
+			};
+			list.value.todos = [
 				updatedTodo,
-				...all.value.slice(0, todoIndex),
-				...all.value.slice(todoIndex + 1)
+				...list.value.todos.slice(0, todoIndex),
+				...list.value.todos.slice(todoIndex + 1)
 			];
 		}
 	}
@@ -57,7 +57,7 @@
 			text: `Todo ${i + 1}`,
 			completed: false
 		}));
-		all.value = [...todos, ...all.value];
+		list.value.todos = [...todos, ...list.value.todos];
 	}
 
 	function onKeyDown(e: KeyboardEvent) {
@@ -82,13 +82,25 @@
 				>
 					populate
 				</button>
-				<button class="bg-gray-200 p-2" onclick={() => (all.value = [])}> clear </button>
+				<button class="bg-gray-200 p-2" onclick={() => (list.value.todos = [])}> clear </button>
 			</div>
 		{/if}
 
 		<div class="py-8">
 			<GroovyHeader text="Groovy TODOs" />
 		</div>
+		{#if !qrCodeIsVisible}
+			<div class="flex flex-row justify-between p-2 text-white">
+				<p></p>
+				<button onclick={() => (qrCodeIsVisible = true)} class="text-white">
+					<QrCode size={24} />
+				</button>
+			</div>
+		{:else}
+			<button onclick={() => (qrCodeIsVisible = false)}>
+				<DumbQrCode />
+			</button>
+		{/if}
 		<form
 			class="mb-4 flex h-[60px] w-full rounded-2xl border-4 border-fuchsia-400 bg-black bg-opacity-30 px-4 text-white outline-none transition-colors duration-300 hover:border-yellow-300 hover:bg-opacity-40 {input.value.trim()
 				? 'border-yellow-300'
@@ -114,7 +126,7 @@
 			{/if}
 		</form>
 
-		{#if all.value.length === 0}
+		{#if list.value.todos.length === 0}
 			<div
 				class="border-10 font-boldtext-white flex flex-col gap-2 bg-opacity-10 text-5xl opacity-10"
 			>
@@ -129,7 +141,7 @@
 					class="mb-2 flex h-12 items-center justify-between rounded-md bg-white bg-opacity-50 hover:bg-opacity-60"
 					onmouseenter={() => (focusedTodo = todo)}
 					onmouseleave={() => {
-						all.saveToLocalStorage();
+						list.saveToLocalStorage();
 						focusedTodo = undefined;
 					}}
 				>
@@ -178,7 +190,8 @@
 					</button>
 					{#if !collapsed.value}
 						<button
-							onclick={() => (all.value = all.value.filter((todo) => todo.completed === false))}
+							onclick={() =>
+								(list.value.todos = list.value.todos.filter((todo) => todo.completed === false))}
 							class="p-1 text-sm text-white"
 						>
 							<Trash2 class="ml-auto mr-2 text-white" size={24} />
@@ -192,7 +205,7 @@
 								class="mb-2 flex h-12 items-center justify-between rounded-md bg-white bg-opacity-50 hover:bg-opacity-60"
 								onmouseenter={() => (focusedTodo = todo)}
 								onmouseleave={() => {
-									all.saveToLocalStorage();
+									list.saveToLocalStorage();
 									focusedTodo = undefined;
 								}}
 							>
