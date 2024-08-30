@@ -197,9 +197,11 @@
 								}}
 							>
 								<div class="flex w-5 flex-shrink-0 items-center justify-center">
-									<button>
-										<GripVertical size={24} />
-									</button>
+									{#if focusedTodo === todo}
+										<button>
+											<GripVertical size={24} />
+										</button>
+									{/if}
 								</div>
 
 								<button onclick={() => toggleTodo(todo.id)} class="mr-2 opacity-80">
