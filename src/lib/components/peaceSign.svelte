@@ -2,7 +2,7 @@
 	let { size = 24, color = 'black' }: { size?: number; color?: string } = $props();
 </script>
 
-<div class="text-red-500 hover:animate-spin">
+<div class="hover:animate-spin">
 	<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 250 250">
 		<g fill="none" stroke={color} stroke-width="21">
 			<circle cx="125" cy="125" r="106" />

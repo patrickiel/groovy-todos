@@ -15,7 +15,7 @@
 	const hues = $derived(Array.from(text).map((_, index) => (shift + index * text.length) % 360));
 </script>
 
-<div class="flex items-center justify-center gap-2">
+<div class="flex items-center justify-center">
 	<span>
 		{#each text.split('') as char, index}
 			<span class="groovyHeader text-4xl font-bold" style="color: hsl({hues[index]}, 100%, 50%)"
@@ -23,13 +23,14 @@
 			>
 		{/each}
 	</span>
-	<PeaceSign size={160} color={`hsl(${shift}, 100%, 50%)`} />
+	<div class="w-8 flex-shrink"></div>
+	<PeaceSign size={140} color={`hsl(${shift}, 100%, 50%)`} />
 </div>
 
 <style>
 	.groovyHeader {
 		font-family: 'Spicy Rice';
 		line-height: 5.5rem;
-		font-size: 6rem;
+		font-size: 5rem;
 	}
 </style>
