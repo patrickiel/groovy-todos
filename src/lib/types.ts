@@ -1,7 +1,7 @@
 
 type TodoItem = {
     id: string;
-    created: Date;
+    created: number;
     text: string;
     completed: boolean;
 };

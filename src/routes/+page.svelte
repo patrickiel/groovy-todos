@@ -1,19 +1,20 @@
 <script lang="ts">
 	import { LocalStore } from '$lib/local-store.svelte';
 	import '../app.css';
-	import { nanoid } from 'nanoid';
 	import { fade, slide } from 'svelte/transition';
-	import { Trash2, GripVertical, X, CirclePlus, Menu, ChevronDown, QrCode } from 'lucide-svelte';
+	import { Trash2, GripVertical, X, CirclePlus, ChevronDown, QrCode, Link } from 'lucide-svelte';
 	import GroovyHeader from '$lib/components/groovyHeader.svelte';
 	import Checkbox from '$lib/components/checkbox.svelte';
 	import DumbQrCode from '$lib/components/dumbQrCode.svelte';
+	import { PeerStore } from '$lib/peer-store.svelte';
 
 	let qrCodeIsVisible = $state(false);
 	let input = $state(new LocalStore('input', ''));
 	let focusedTodo = $state<TodoItem>();
 	let isAdminToolVisible = $state(false);
+
 	const listId = 'gI_s3jzlll3U_jpLqiYPM';
-	let list = $state(new LocalStore<TodoList>('list1', { todos: [], id: listId }));
+	let list = $state(new PeerStore(listId));
 	let active = $derived<TodoItem[]>(list.value.todos.filter((todo) => !todo.completed));
 	let completed = $derived<TodoItem[]>(list.value.todos.filter((todo) => todo.completed));
 
@@ -21,49 +22,55 @@
 
 	let collapsed = new LocalStore('collapsed', false);
 
+	let peerInputVisible = $state(false);
+	let peerIdInput = $state('');
+
 	async function addTodo(event: Event) {
 		event.preventDefault();
+		console.log('addTodo');
 
 		if (input.value.trim()) {
-			let newTodo = { id: nanoid(), text: input.value, completed: false };
-			list.value.todos = [newTodo, ...list.value.todos];
+			list.addTodo(input.value);
 			input.value = '';
 			inputElement?.focus();
 		}
 	}
 
 	function deleteTodo(id: string) {
-		list.value.todos = list.value.todos.filter((todo) => todo.id !== id);
+		list.value = {
+			...list.value,
+			todos: list.value.todos.filter((todo) => todo.id !== id)
+		};
 	}
 
 	function toggleTodo(id: string) {
-		const todoIndex = list.value.todos.findIndex((todo) => todo.id === id);
-		if (todoIndex !== -1) {
-			const updatedTodo = {
-				...list.value.todos[todoIndex],
-				completed: !list.value.todos[todoIndex].completed
-			};
-			list.value.todos = [
-				updatedTodo,
-				...list.value.todos.slice(0, todoIndex),
-				...list.value.todos.slice(todoIndex + 1)
-			];
-		}
+		list.toggleTodo(id);
 	}
 
 	function addTodos(numberOfItems: number) {
-		const todos = Array.from({ length: numberOfItems }, (_, i) => ({
-			id: nanoid(),
-			text: `Todo ${i + 1}`,
-			completed: false
-		}));
-		list.value.todos = [...todos, ...list.value.todos];
+		// const todos = Array.from({ length: numberOfItems }, (_, i) => ({
+		// 	id: nanoid(),
+		// 	text: `Todo ${i + 1}`,
+		// 	completed: false,
+		// 	created: new Date()
+		// }));
+		// list.value = {
+		// 	...list.value,
+		// 	todos: [...list.value.todos, ...todos],
 	}
 
 	function onKeyDown(e: KeyboardEvent) {
 		console.log(e.key);
 		if (e.key === 'a' && e.ctrlKey && e.altKey) {
 			isAdminToolVisible = !isAdminToolVisible;
+		}
+	}
+
+	function connectToPeer() {
+		if (peerIdInput) {
+			list.connectToPeer(peerIdInput);
+			peerIdInput = '';
+			peerInputVisible = false;
 		}
 	}
 </script>
@@ -82,25 +89,47 @@
 				>
 					populate
 				</button>
-				<button class="bg-gray-200 p-2" onclick={() => (list.value.todos = [])}> clear </button>
+				<button
+					class="bg-gray-200 p-2"
+					onclick={() => {
+						list.value = { ...list.value, todos: [] };
+						input.value = '';
+					}}
+				>
+					clear
+				</button>
 			</div>
 		{/if}
 
 		<div class="py-8">
 			<GroovyHeader text="Groovy TODOs" />
 		</div>
-		{#if !qrCodeIsVisible}
-			<div class="flex flex-row justify-between p-2 text-white">
-				<p></p>
+		<div class="flex flex-row justify-between p-2 text-white">
+			<button onclick={() => (peerInputVisible = !peerInputVisible)} class="text-white">
+				<Link size={24} />
+			</button>
+			{#if !qrCodeIsVisible}
 				<button onclick={() => (qrCodeIsVisible = true)} class="text-white">
 					<QrCode size={24} />
 				</button>
+			{:else}
+				<button onclick={() => (qrCodeIsVisible = false)}>
+					<DumbQrCode />
+				</button>
+			{/if}
+		</div>
+		{#if peerInputVisible}
+			<div class="mb-4 flex flex-row gap-2">
+				<input
+					bind:value={peerIdInput}
+					class="w-full border border-gray-300 p-2"
+					type="text"
+					placeholder="Enter peer ID"
+				/>
+				<button class="bg-gray-200 p-2" onclick={connectToPeer}>Connect</button>
 			</div>
-		{:else}
-			<button onclick={() => (qrCodeIsVisible = false)}>
-				<DumbQrCode />
-			</button>
 		{/if}
+		<p class="mb-2 text-white">Your Sync ID: {list.getSyncId()}</p>
 		<form
 			class="mb-4 flex h-[60px] w-full rounded-2xl border-4 border-fuchsia-400 bg-black bg-opacity-30 px-4 text-white outline-none transition-colors duration-300 hover:border-yellow-300 hover:bg-opacity-40 {input.value.trim()
 				? 'border-yellow-300'
@@ -141,7 +170,6 @@
 					class="mb-2 flex h-12 items-center justify-between rounded-md bg-white bg-opacity-50 hover:bg-opacity-60"
 					onmouseenter={() => (focusedTodo = todo)}
 					onmouseleave={() => {
-						list.saveToLocalStorage();
 						focusedTodo = undefined;
 					}}
 				>
@@ -161,6 +189,9 @@
 						class="w-full flex-grow bg-transparent outline-none"
 						type="text"
 						bind:value={todo.text}
+						onchange={() => {
+							list.value = { ...list.value, todos: [...list.value.todos] };
+						}}
 					/>
 					{#if focusedTodo === todo}
 						<button onclick={() => deleteTodo(todo.id)} class="ml-auto pr-3 text-sm text-white">
@@ -190,8 +221,12 @@
 					</button>
 					{#if !collapsed.value}
 						<button
-							onclick={() =>
-								(list.value.todos = list.value.todos.filter((todo) => todo.completed === false))}
+							onclick={() => {
+								list.value = {
+									...list.value,
+									todos: list.value.todos.filter((todo) => todo.completed === false)
+								};
+							}}
 							class="p-1 text-sm text-white"
 						>
 							<Trash2 class="ml-auto mr-2 text-white" size={24} />
@@ -205,7 +240,6 @@
 								class="mb-2 flex h-12 items-center justify-between rounded-md bg-white bg-opacity-50 hover:bg-opacity-60"
 								onmouseenter={() => (focusedTodo = todo)}
 								onmouseleave={() => {
-									list.saveToLocalStorage();
 									focusedTodo = undefined;
 								}}
 							>
