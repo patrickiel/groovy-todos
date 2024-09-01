@@ -3,7 +3,15 @@
 	import '../app.css';
 	import { nanoid } from 'nanoid';
 	import { fade, slide } from 'svelte/transition';
-	import { Trash2, GripVertical, X, CirclePlus, ChevronDown } from 'lucide-svelte';
+	import {
+		Trash2,
+		GripVertical,
+		X,
+		CirclePlus,
+		ChevronDown,
+		SquareCheck,
+		Square
+	} from 'lucide-svelte';
 	import GroovyHeader from '$lib/components/groovyHeader.svelte';
 	import Checkbox from '$lib/components/checkbox.svelte';
 
@@ -162,12 +170,15 @@
 		</form>
 
 		{#if all.value.length === 0}
-			<div
-				class="border-10 font-boldtext-white flex flex-col gap-2 bg-opacity-10 text-5xl opacity-10"
-			>
-				<p class="h-12 rounded-md bg-white p-2 text-2xl"></p>
-				<p class="h-12 rounded-md bg-white p-2 text-2xl"></p>
-				<p class="h-12 rounded-md bg-white p-2 text-2xl"></p>
+			<div class="border-10 flex flex-col gap-2 opacity-20">
+				<p class="h-12 rounded-md bg-white opacity-35"></p>
+				<p class="h-12 rounded-md bg-white opacity-30"></p>
+				<p class="h-12 rounded-md bg-white opacity-25"></p>
+				<p class="h-12 rounded-md bg-white opacity-20"></p>
+				<p class="h-12 rounded-md bg-white opacity-15"></p>
+				<p class="h-12 rounded-md bg-white opacity-10"></p>
+				<p class="h-12 rounded-md bg-white opacity-5"></p>
+				<p class="h-12 rounded-md bg-white opacity-0"></p>
 			</div>
 		{/if}
 		<ul>
@@ -192,14 +203,16 @@
 							ondragstart={(e) => onDragStart(e, todo)}
 							ontouchstart={(e) => onTouchStart(e, todo)}
 						>
-							<GripVertical size={24} />
+							<GripVertical size={24} class="text-black opacity-50 hover:opacity-90" />
 						</button>
 					{:else}
 						<div class="w-5 flex-shrink-0"></div>
 					{/if}
 
-					<button onclick={() => toggleTodo(todo.id)} class="mr-2 opacity-80">
-						<Checkbox isChecked={todo.completed} />
+					<button onclick={() => toggleTodo(todo.id)} class="mr-2">
+						<Square
+							class="opacity-50 duration-200 hover:fill-yellow-200 hover:text-yellow-800 hover:opacity-90"
+						/>
 					</button>
 
 					<input
@@ -209,7 +222,7 @@
 					/>
 					{#if movedTodo === undefined ? focusedTodo === todo : false}
 						<button onclick={() => deleteTodo(todo.id)} class="ml-auto pr-3 text-sm text-white">
-							<X class="text-white opacity-40 invert" size={24} />
+							<X class="text-black opacity-50 hover:opacity-90" size={24} />
 						</button>
 					{/if}
 				</li>
@@ -217,28 +230,30 @@
 		</ul>
 		{#if completed.length !== 0}
 			<div in:fade={{ duration: 300 }}>
-				<div class="flex">
+				<div class="flex text-white">
 					<button
 						class="my-2 flex w-full items-center"
 						onclick={() => (collapsed.value = !collapsed.value)}
 					>
-						<div
-							class="{collapsed.value
-								? 'rotate-180 '
-								: 'rotate-0'} transition-transform duration-300 text-white"
-						>
-							<ChevronDown size={30} />
+						<div class="flex opacity-70 hover:opacity-90">
+							<div
+								class="{collapsed.value
+									? 'rotate-180 '
+									: 'rotate-0'} transition-transform duration-300"
+							>
+								<ChevronDown size={30} />
+							</div>
+							<span
+								>{completed.length} completed item{#if completed.length > 1}s{/if}</span
+							>
 						</div>
-						<span class="text-white"
-							>{completed.length} completed item{#if completed.length > 1}s{/if}</span
-						>
 					</button>
 					{#if !collapsed.value}
 						<button
 							onclick={() => (all.value = all.value.filter((todo) => todo.completed === false))}
-							class="p-1 text-sm text-white"
+							class="p-1 text-sm opacity-70 hover:opacity-90"
 						>
-							<Trash2 class="ml-auto mr-2 text-white" size={24} />
+							<Trash2 class="ml-auto mr-2" size={24} />
 						</button>
 					{/if}
 				</div>
@@ -265,14 +280,16 @@
 										ondragstart={(e) => onDragStart(e, todo)}
 										ontouchstart={(e) => onTouchStart(e, todo)}
 									>
-										<GripVertical size={24} />
+										<GripVertical size={24} class="text-black opacity-50 hover:opacity-90" />
 									</button>
 								{:else}
 									<div class="w-5 flex-shrink-0"></div>
 								{/if}
 
-								<button onclick={() => toggleTodo(todo.id)} class="mr-2 opacity-80">
-									<Checkbox isChecked={todo.completed} />
+								<button onclick={() => toggleTodo(todo.id)} class="mr-2">
+									<SquareCheck
+										class="opacity-50 hover:fill-yellow-200 hover:text-yellow-800 hover:opacity-90"
+									/>
 								</button>
 
 								<span class="flex-grow">{todo.text}</span>
@@ -281,7 +298,7 @@
 										onclick={() => deleteTodo(todo.id)}
 										class="ml-auto pr-3 text-sm text-white"
 									>
-										<X class="text-white opacity-40 invert" size={24} />
+										<X class="text-black opacity-50 hover:opacity-90" size={24} />
 									</button>
 								{/if}
 							</li>
