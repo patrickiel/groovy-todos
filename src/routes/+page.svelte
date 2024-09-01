@@ -189,7 +189,6 @@
 					}}
 					ondragover={(e) => onDragOver(e, todo)}
 					ondragend={() => (movedTodo = undefined)}
-					ontouchstart={(e) => onTouchStart(e, todo)}
 					ontouchmove={(e) => onTouchMove(e, todo)}
 					ontouchend={onTouchEnd}
 				>
@@ -198,6 +197,7 @@
 							class="flex w-5 flex-shrink-0 items-center justify-center"
 							draggable="true"
 							ondragstart={(e) => onDragStart(e, todo)}
+							ontouchstart={(e) => onTouchStart(e, todo)}
 						>
 							<GripVertical size={24} />
 						</button>
