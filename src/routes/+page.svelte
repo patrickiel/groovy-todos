@@ -89,9 +89,7 @@
 		movedTodo = todo;
 	}
 
-	function onDragOver(event: DragEvent, todo: Todo) {
-		event.preventDefault();
-
+	function swapTodos(todo: Todo) {
 		if (movedTodo === undefined) return;
 
 		//swap todo with draggedTodo
@@ -102,6 +100,11 @@
 		});
 	}
 
+	function onDragOver(event: DragEvent, todo: Todo) {
+		event.preventDefault();
+		swapTodos(todo);
+	}
+
 	function onTouchStart(event: TouchEvent, todo: Todo) {
 		event.preventDefault();
 		movedTodo = todo;
@@ -109,17 +112,7 @@
 
 	function onTouchMove(event: TouchEvent, todo: Todo) {
 		event.preventDefault();
-
-		all.value = all.value.map((t) => {
-			if (t.id === todo.id) return movedTodo!;
-			if (t.id === movedTodo!.id) return todo;
-			return t;
-		});
-	}
-
-	function onTouchEnd(event: TouchEvent) {
-		event.preventDefault();
-		movedTodo = undefined;
+		swapTodos(todo);
 	}
 </script>
 
@@ -146,7 +139,7 @@
 		</div>
 		<form
 			class="mb-4 flex h-[60px] w-full rounded-2xl border-4 border-fuchsia-400 bg-black bg-opacity-30 px-4 text-white outline-none transition-colors duration-300 hover:border-yellow-300 hover:bg-opacity-40
-					{input.value.trim() ? 'border-yellow-300' : ''}"
+					{input.value.trim() ? 'border-yellow-300 ' : ''}"
 			onsubmit={addTodo}
 		>
 			<input
@@ -180,8 +173,8 @@
 		<ul>
 			{#each active as todo (todo.id)}
 				<li
-					class="mb-2 flex h-12 items-center justify-between rounded-md bg-white bg-opacity-50 hover:bg-opacity-60
-							{movedTodo === todo ? 'scale-105 border-4 border-yellow-300' : ''}"
+					class="mb-2 flex h-12 items-center justify-between rounded-md bg-white duration-200 bg-opacity-50 hover:bg-opacity-60
+							{movedTodo === todo ? 'scale-105 bg-yellow-200 ' : ''}"
 					onmouseenter={() => (focusedTodo = todo)}
 					onmouseleave={() => {
 						all.saveToLocalStorage();
@@ -189,9 +182,8 @@
 					}}
 					ondragover={(e) => onDragOver(e, todo)}
 					ondragend={() => (movedTodo = undefined)}
-					ontouchstart={() => (focusedTodo = todo)}
 					ontouchmove={(e) => onTouchMove(e, todo)}
-					ontouchend={onTouchEnd}
+					ontouchend={(e) => (movedTodo = undefined)}
 				>
 					{#if movedTodo === undefined ? focusedTodo === todo : movedTodo === todo}
 						<button
@@ -254,21 +246,22 @@
 					<ul transition:slide={{ duration: 300 }} class="opacity-60">
 						{#each completed as todo (todo.id)}
 							<li
-								class="mb-2 flex h-12 items-center justify-between rounded-md bg-white bg-opacity-50 hover:bg-opacity-60
-							{movedTodo === todo ? 'scale-105 border-4 border-yellow-300' : ''}"
+								class="mb-2 flex h-12 items-center justify-between rounded-md duration-200 bg-white bg-opacity-50 hover:bg-opacity-60
+							{movedTodo === todo ? 'scale-105 bg-yellow-200' : ''}"
 								onmouseenter={() => (focusedTodo = todo)}
 								onmouseleave={() => {
 									all.saveToLocalStorage();
 									focusedTodo = undefined;
 								}}
-								ondragover={(e) => onDragOver(e, todo)}
-								ondragend={() => (movedTodo = undefined)}
+								ontouchmove={(e) => onTouchMove(e, todo)}
+								ontouchend={(e) => (movedTodo = undefined)}
 							>
 								{#if movedTodo === undefined ? focusedTodo === todo : movedTodo === todo}
 									<button
 										class="flex w-5 flex-shrink-0 items-center justify-center"
 										draggable="true"
 										ondragstart={(e) => onDragStart(e, todo)}
+										ontouchstart={(e) => onTouchStart(e, todo)}
 									>
 										<GripVertical size={24} />
 									</button>
