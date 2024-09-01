@@ -253,6 +253,8 @@
 									all.saveToLocalStorage();
 									focusedTodo = undefined;
 								}}
+								ondragover={(e) => onDragOver(e, todo)}
+								ondragend={() => (movedTodo = undefined)}
 								ontouchmove={(e) => onTouchMove(e, todo)}
 								ontouchend={(e) => (movedTodo = undefined)}
 							>
