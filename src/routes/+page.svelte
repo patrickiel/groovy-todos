@@ -66,6 +66,41 @@
 			isAdminToolVisible = !isAdminToolVisible;
 		}
 	}
+
+	let draggedTodo = $state<Todo>();
+
+	function onDragStart(event: DragEvent, todo: Todo) {
+		if (event.dataTransfer) {
+			// Create an invisible element to use as the drag image
+			const dragGhost = document.createElement('div');
+			dragGhost.style.opacity = '0';
+			document.body.appendChild(dragGhost);
+
+			event.dataTransfer.setDragImage(dragGhost, 0, 0);
+			event.dataTransfer.effectAllowed = 'move';
+			event.dataTransfer.setData('text/plain', todo.id);
+
+			// Remove the ghost element after a short delay
+			setTimeout(() => {
+				document.body.removeChild(dragGhost);
+			}, 0);
+		}
+
+		draggedTodo = todo;
+	}
+
+	function onDragOver(event: DragEvent, todo: Todo) {
+		event.preventDefault();
+
+		if (draggedTodo === undefined) return;
+
+		//swap todo with draggedTodo
+		all.value = all.value.map((t) => {
+			if (t.id === todo.id) return draggedTodo!;
+			if (t.id === draggedTodo!.id) return todo;
+			return t;
+		});
+	}
 </script>
 
 <div class="hippie-bg min-h-screen">
@@ -90,9 +125,8 @@
 			<GroovyHeader text="Groovy TODOs" />
 		</div>
 		<form
-			class="mb-4 flex h-[60px] w-full rounded-2xl border-4 border-fuchsia-400 bg-black bg-opacity-30 px-4 text-white outline-none transition-colors duration-300 hover:border-yellow-300 hover:bg-opacity-40 {input.value.trim()
-				? 'border-yellow-300'
-				: ''}"
+			class="mb-4 flex h-[60px] w-full rounded-2xl border-4 border-fuchsia-400 bg-black bg-opacity-30 px-4 text-white outline-none transition-colors duration-300 hover:border-yellow-300 hover:bg-opacity-40
+					{input.value.trim() ? 'border-yellow-300' : ''}"
 			onsubmit={addTodo}
 		>
 			<input
@@ -118,28 +152,35 @@
 			<div
 				class="border-10 font-boldtext-white flex flex-col gap-2 bg-opacity-10 text-5xl opacity-10"
 			>
-				<p class="h-12 rounded-md bg-white p-2 text-2xl">NO</p>
-				<p class="h-12 rounded-md bg-white p-2 text-center text-2xl">TODOs</p>
-				<p class="h-12 rounded-md bg-white p-2 text-right text-2xl">YET!</p>
+				<p class="h-12 rounded-md bg-white p-2 text-2xl"></p>
+				<p class="h-12 rounded-md bg-white p-2 text-2xl"></p>
+				<p class="h-12 rounded-md bg-white p-2 text-2xl"></p>
 			</div>
 		{/if}
 		<ul>
 			{#each active as todo (todo.id)}
 				<li
-					class="mb-2 flex h-12 items-center justify-between rounded-md bg-white bg-opacity-50 hover:bg-opacity-60"
+					class="mb-2 flex h-12 items-center justify-between rounded-md bg-white bg-opacity-50 hover:bg-opacity-60
+							{draggedTodo === todo ? 'scale-105 border-4 border-yellow-300' : ''}"
 					onmouseenter={() => (focusedTodo = todo)}
 					onmouseleave={() => {
 						all.saveToLocalStorage();
 						focusedTodo = undefined;
 					}}
+					ondragover={(e) => onDragOver(e, todo)}
+					ondragend={() => (draggedTodo = undefined)}
 				>
-					<div class="flex h-full w-5 flex-shrink-0 items-center justify-center">
-						{#if focusedTodo === todo}
-							<button>
-								<GripVertical size={24} />
-							</button>
-						{/if}
-					</div>
+					{#if draggedTodo === undefined ? focusedTodo === todo : draggedTodo === todo}
+						<button
+							class="flex w-5 flex-shrink-0 items-center justify-center"
+							draggable="true"
+							ondragstart={(e) => onDragStart(e, todo)}
+						>
+							<GripVertical size={24} />
+						</button>
+					{:else}
+						<div class="w-5 flex-shrink-0"></div>
+					{/if}
 
 					<button onclick={() => toggleTodo(todo.id)} class="mr-2 opacity-80">
 						<Checkbox isChecked={todo.completed} />
@@ -150,7 +191,7 @@
 						type="text"
 						bind:value={todo.text}
 					/>
-					{#if focusedTodo === todo}
+					{#if draggedTodo === undefined ? focusedTodo === todo : false}
 						<button onclick={() => deleteTodo(todo.id)} class="ml-auto pr-3 text-sm text-white">
 							<X class="text-white opacity-40 invert" size={24} />
 						</button>
@@ -186,30 +227,37 @@
 					{/if}
 				</div>
 				{#if !collapsed.value}
-					<ul transition:slide={{ duration: 300 }} class="opacity-50">
+					<ul transition:slide={{ duration: 300 }} class="opacity-60">
 						{#each completed as todo (todo.id)}
 							<li
-								class="mb-2 flex h-12 items-center justify-between rounded-md bg-white bg-opacity-50 hover:bg-opacity-60"
+								class="mb-2 flex h-12 items-center justify-between rounded-md bg-white bg-opacity-50 hover:bg-opacity-60
+							{draggedTodo === todo ? 'scale-105 border-4 border-yellow-300' : ''}"
 								onmouseenter={() => (focusedTodo = todo)}
 								onmouseleave={() => {
 									all.saveToLocalStorage();
 									focusedTodo = undefined;
 								}}
+								ondragover={(e) => onDragOver(e, todo)}
+								ondragend={() => (draggedTodo = undefined)}
 							>
-								<div class="flex w-5 flex-shrink-0 items-center justify-center">
-									{#if focusedTodo === todo}
-										<button>
-											<GripVertical size={24} />
-										</button>
-									{/if}
-								</div>
+								{#if draggedTodo === undefined ? focusedTodo === todo : draggedTodo === todo}
+									<button
+										class="flex w-5 flex-shrink-0 items-center justify-center"
+										draggable="true"
+										ondragstart={(e) => onDragStart(e, todo)}
+									>
+										<GripVertical size={24} />
+									</button>
+								{:else}
+									<div class="w-5 flex-shrink-0"></div>
+								{/if}
 
 								<button onclick={() => toggleTodo(todo.id)} class="mr-2 opacity-80">
 									<Checkbox isChecked={todo.completed} />
 								</button>
 
 								<span class="flex-grow">{todo.text}</span>
-								{#if focusedTodo === todo}
+								{#if draggedTodo === undefined ? focusedTodo === todo : false}
 									<button
 										onclick={() => deleteTodo(todo.id)}
 										class="ml-auto pr-3 text-sm text-white"
