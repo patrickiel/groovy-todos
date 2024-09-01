@@ -189,6 +189,7 @@
 					}}
 					ondragover={(e) => onDragOver(e, todo)}
 					ondragend={() => (movedTodo = undefined)}
+					ontouchstart={() => (focusedTodo = todo)}
 					ontouchmove={(e) => onTouchMove(e, todo)}
 					ontouchend={onTouchEnd}
 				>
