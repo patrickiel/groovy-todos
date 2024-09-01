@@ -67,7 +67,7 @@
 		}
 	}
 
-	let draggedTodo = $state<Todo>();
+	let movedTodo = $state<Todo>();
 
 	function onDragStart(event: DragEvent, todo: Todo) {
 		if (event.dataTransfer) {
@@ -86,20 +86,40 @@
 			}, 0);
 		}
 
-		draggedTodo = todo;
+		movedTodo = todo;
 	}
 
 	function onDragOver(event: DragEvent, todo: Todo) {
 		event.preventDefault();
 
-		if (draggedTodo === undefined) return;
+		if (movedTodo === undefined) return;
 
 		//swap todo with draggedTodo
 		all.value = all.value.map((t) => {
-			if (t.id === todo.id) return draggedTodo!;
-			if (t.id === draggedTodo!.id) return todo;
+			if (t.id === todo.id) return movedTodo!;
+			if (t.id === movedTodo!.id) return todo;
 			return t;
 		});
+	}
+
+	function onTouchStart(event: TouchEvent, todo: Todo) {
+		event.preventDefault();
+		movedTodo = todo;
+	}
+
+	function onTouchMove(event: TouchEvent, todo: Todo) {
+		event.preventDefault();
+
+		all.value = all.value.map((t) => {
+			if (t.id === todo.id) return movedTodo!;
+			if (t.id === movedTodo!.id) return todo;
+			return t;
+		});
+	}
+
+	function onTouchEnd(event: TouchEvent) {
+		event.preventDefault();
+		movedTodo = undefined;
 	}
 </script>
 
@@ -161,16 +181,19 @@
 			{#each active as todo (todo.id)}
 				<li
 					class="mb-2 flex h-12 items-center justify-between rounded-md bg-white bg-opacity-50 hover:bg-opacity-60
-							{draggedTodo === todo ? 'scale-105 border-4 border-yellow-300' : ''}"
+							{movedTodo === todo ? 'scale-105 border-4 border-yellow-300' : ''}"
 					onmouseenter={() => (focusedTodo = todo)}
 					onmouseleave={() => {
 						all.saveToLocalStorage();
 						focusedTodo = undefined;
 					}}
 					ondragover={(e) => onDragOver(e, todo)}
-					ondragend={() => (draggedTodo = undefined)}
+					ondragend={() => (movedTodo = undefined)}
+					ontouchstart={(e) => onTouchStart(e, todo)}
+					ontouchmove={(e) => onTouchMove(e, todo)}
+					ontouchend={onTouchEnd}
 				>
-					{#if draggedTodo === undefined ? focusedTodo === todo : draggedTodo === todo}
+					{#if movedTodo === undefined ? focusedTodo === todo : movedTodo === todo}
 						<button
 							class="flex w-5 flex-shrink-0 items-center justify-center"
 							draggable="true"
@@ -191,7 +214,7 @@
 						type="text"
 						bind:value={todo.text}
 					/>
-					{#if draggedTodo === undefined ? focusedTodo === todo : false}
+					{#if movedTodo === undefined ? focusedTodo === todo : false}
 						<button onclick={() => deleteTodo(todo.id)} class="ml-auto pr-3 text-sm text-white">
 							<X class="text-white opacity-40 invert" size={24} />
 						</button>
@@ -231,16 +254,16 @@
 						{#each completed as todo (todo.id)}
 							<li
 								class="mb-2 flex h-12 items-center justify-between rounded-md bg-white bg-opacity-50 hover:bg-opacity-60
-							{draggedTodo === todo ? 'scale-105 border-4 border-yellow-300' : ''}"
+							{movedTodo === todo ? 'scale-105 border-4 border-yellow-300' : ''}"
 								onmouseenter={() => (focusedTodo = todo)}
 								onmouseleave={() => {
 									all.saveToLocalStorage();
 									focusedTodo = undefined;
 								}}
 								ondragover={(e) => onDragOver(e, todo)}
-								ondragend={() => (draggedTodo = undefined)}
+								ondragend={() => (movedTodo = undefined)}
 							>
-								{#if draggedTodo === undefined ? focusedTodo === todo : draggedTodo === todo}
+								{#if movedTodo === undefined ? focusedTodo === todo : movedTodo === todo}
 									<button
 										class="flex w-5 flex-shrink-0 items-center justify-center"
 										draggable="true"
@@ -257,7 +280,7 @@
 								</button>
 
 								<span class="flex-grow">{todo.text}</span>
-								{#if draggedTodo === undefined ? focusedTodo === todo : false}
+								{#if movedTodo === undefined ? focusedTodo === todo : false}
 									<button
 										onclick={() => deleteTodo(todo.id)}
 										class="ml-auto pr-3 text-sm text-white"
