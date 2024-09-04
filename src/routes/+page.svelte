@@ -1,316 +1,47 @@
 <script lang="ts">
 	import { LocalStore } from '$lib/local-store.svelte';
 	import '../app.css';
-	import { nanoid } from 'nanoid';
 	import { fade, slide } from 'svelte/transition';
-	import {
-		Trash2,
-		GripVertical,
-		X,
-		CirclePlus,
-		ChevronDown,
-		SquareCheck,
-		Square
-	} from 'lucide-svelte';
 	import GroovyHeader from '$lib/components/groovyHeader.svelte';
-	import Checkbox from '$lib/components/checkbox.svelte';
+	import TodoList from '$lib/components/todoList.svelte';
+	import InputBox from '$lib/components/inputBox.svelte';
+	import DummyList from '$lib/components/dummyList.svelte';
+	import Divider from '$lib/components/divider.svelte';
 
-	type Todo = {
-		id: string;
-		text: string;
-		completed: boolean;
-	};
-
-	let input = $state(new LocalStore('input', ''));
-	let focusedTodo = $state<Todo>();
-	let isAdminToolVisible = $state(false);
 	let all = $state(new LocalStore<Todo[]>('todos', []));
 	let active = $derived<Todo[]>(all.value.filter((todo) => !todo.completed));
 	let completed = $derived<Todo[]>(all.value.filter((todo) => todo.completed));
-
-	let inputElement: HTMLInputElement;
-
-	let collapsed = new LocalStore('collapsed', false);
-
-	async function addTodo(event: Event) {
-		event.preventDefault();
-
-		if (input.value.trim()) {
-			let newTodo = { id: nanoid(), text: input.value, completed: false };
-			all.value = [newTodo, ...all.value];
-			input.value = '';
-			inputElement?.focus();
-		}
-	}
-
-	function deleteTodo(id: string) {
-		all.value = all.value.filter((todo) => todo.id !== id);
-	}
-
-	function toggleTodo(id: string) {
-		const todoIndex = all.value.findIndex((todo) => todo.id === id);
-		if (todoIndex !== -1) {
-			const updatedTodo = { ...all.value[todoIndex], completed: !all.value[todoIndex].completed };
-			all.value = [
-				updatedTodo,
-				...all.value.slice(0, todoIndex),
-				...all.value.slice(todoIndex + 1)
-			];
-		}
-	}
-
-	function addTodos(numberOfItems: number) {
-		const todos = Array.from({ length: numberOfItems }, (_, i) => ({
-			id: nanoid(),
-			text: `Todo ${i + 1}`,
-			completed: false
-		}));
-		all.value = [...todos, ...all.value];
-	}
-
-	function onKeyDown(e: KeyboardEvent) {
-		console.log(e.key);
-		if (e.key === 'a' && e.ctrlKey && e.altKey) {
-			isAdminToolVisible = !isAdminToolVisible;
-		}
-	}
-
-	let movedTodo = $state<Todo>();
-
-	function onDragStart(event: DragEvent, todo: Todo) {
-		if (event.dataTransfer) {
-			// Create an invisible element to use as the drag image
-			const dragGhost = document.createElement('div');
-			dragGhost.style.opacity = '0';
-			document.body.appendChild(dragGhost);
-
-			event.dataTransfer.setDragImage(dragGhost, 0, 0);
-			event.dataTransfer.effectAllowed = 'move';
-			event.dataTransfer.setData('text/plain', todo.id);
-
-			// Remove the ghost element after a short delay
-			setTimeout(() => {
-				document.body.removeChild(dragGhost);
-			}, 0);
-		}
-
-		movedTodo = todo;
-	}
-
-	function swapTodos(todo: Todo) {
-		if (movedTodo === undefined) return;
-
-		//swap todo with draggedTodo
-		all.value = all.value.map((t) => {
-			if (t.id === todo.id) return movedTodo!;
-			if (t.id === movedTodo!.id) return todo;
-			return t;
-		});
-	}
-
-	function onDragOver(event: DragEvent, todo: Todo) {
-		event.preventDefault();
-		swapTodos(todo);
-	}
-
-	function onTouchStart(event: TouchEvent, todo: Todo) {
-		event.preventDefault();
-		movedTodo = todo;
-	}
-
-	function onTouchMove(event: TouchEvent, todo: Todo) {
-		event.preventDefault();
-		swapTodos(todo);
-	}
+	let dividerIsCollapsed = new LocalStore('collapsed', false);
 </script>
 
 <div class="hippie-bg min-h-screen">
 	<main class="mx-auto flex max-w-md flex-col p-4">
-		{#if isAdminToolVisible}
-			<div class="mb-4 flex flex-row gap-2" onsubmit={addTodo}>
-				<input id="numberOfItems" class="w-full border border-gray-300 p-2" type="text" />
-				<button
-					class="bg-gray-200 p-2"
-					onclick={() =>
-						addTodos(
-							parseInt((document.getElementById('numberOfItems') as HTMLInputElement).value, 10)
-						)}
-				>
-					populate
-				</button>
-				<button class="bg-gray-200 p-2" onclick={() => (all.value = [])}> clear </button>
-			</div>
-		{/if}
-
 		<div class="py-8">
 			<GroovyHeader text="Groovy TODOs" />
 		</div>
-		<form
-			class="mb-4 flex h-[60px] w-full rounded-2xl border-4 border-fuchsia-400 bg-black bg-opacity-30 px-4 text-white outline-none transition-colors duration-300 hover:border-yellow-300 hover:bg-opacity-40
-					{input.value.trim() ? 'border-yellow-300 ' : ''}"
-			onsubmit={addTodo}
-		>
-			<input
-				class="w-full bg-transparent outline-none placeholder:text-white placeholder:opacity-80"
-				bind:this={inputElement}
-				bind:value={input.value}
-				placeholder="Add a new todo..."
-			/>
-			{#if input.value.trim()}
-				<button
-					type="submit"
-					disabled={!input.value.trim()}
-					class="text-fuchsia-400 transition-colors duration-300 hover:text-yellow-300 {input.value.trim()
-						? 'text-yellow-300'
-						: ''}"
-				>
-					<CirclePlus size={30} />
-				</button>
-			{/if}
-		</form>
+
+		<InputBox todos={all} />
 
 		{#if all.value.length === 0}
-			<div class="border-10 flex flex-col gap-2 opacity-20">
-				<p class="h-12 rounded-md bg-white opacity-35"></p>
-				<p class="h-12 rounded-md bg-white opacity-30"></p>
-				<p class="h-12 rounded-md bg-white opacity-25"></p>
-				<p class="h-12 rounded-md bg-white opacity-20"></p>
-				<p class="h-12 rounded-md bg-white opacity-15"></p>
-				<p class="h-12 rounded-md bg-white opacity-10"></p>
-				<p class="h-12 rounded-md bg-white opacity-5"></p>
-				<p class="h-12 rounded-md bg-white opacity-0"></p>
+			<div in:fade={{ duration: 200 }}>
+				<DummyList />
 			</div>
 		{/if}
-		<ul>
-			{#each active as todo (todo.id)}
-				<li
-					class="mb-2 flex h-12 items-center justify-between rounded-md bg-white duration-200 bg-opacity-50 hover:bg-opacity-60
-							{movedTodo === todo ? 'scale-105 bg-yellow-200 ' : ''}"
-					onmouseenter={() => (focusedTodo = todo)}
-					onmouseleave={() => {
-						all.saveToLocalStorage();
-						focusedTodo = undefined;
-					}}
-					ondragover={(e) => onDragOver(e, todo)}
-					ondragend={() => (movedTodo = undefined)}
-					ontouchmove={(e) => onTouchMove(e, todo)}
-					ontouchend={(e) => (movedTodo = undefined)}
-				>
-					{#if movedTodo === undefined ? focusedTodo === todo : movedTodo === todo}
-						<button
-							class="flex w-5 flex-shrink-0 items-center justify-center"
-							draggable="true"
-							ondragstart={(e) => onDragStart(e, todo)}
-							ontouchstart={(e) => onTouchStart(e, todo)}
-						>
-							<GripVertical size={24} class="text-black opacity-50 hover:opacity-90" />
-						</button>
-					{:else}
-						<div class="w-5 flex-shrink-0"></div>
-					{/if}
 
-					<button onclick={() => toggleTodo(todo.id)} class="mr-2">
-						<Square
-							class="opacity-50 duration-200 hover:fill-yellow-200 hover:text-yellow-800 hover:opacity-90"
-						/>
-					</button>
+		<TodoList {all} todos={active} isChecked={false} canEdit={true} />
 
-					<input
-						class="w-full flex-grow bg-transparent outline-none"
-						type="text"
-						bind:value={todo.text}
-					/>
-					{#if movedTodo === undefined ? focusedTodo === todo : false}
-						<button onclick={() => deleteTodo(todo.id)} class="ml-auto pr-3 text-sm text-white">
-							<X class="text-black opacity-50 hover:opacity-90" size={24} />
-						</button>
-					{/if}
-				</li>
-			{/each}
-		</ul>
 		{#if completed.length !== 0}
-			<div in:fade={{ duration: 300 }}>
-				<div class="flex text-white">
-					<button
-						class="my-2 flex w-full items-center"
-						onclick={() => (collapsed.value = !collapsed.value)}
-					>
-						<div class="flex opacity-70 hover:opacity-90">
-							<div
-								class="{collapsed.value
-									? 'rotate-180 '
-									: 'rotate-0'} transition-transform duration-300"
-							>
-								<ChevronDown size={30} />
-							</div>
-							<span
-								>{completed.length} completed item{#if completed.length > 1}s{/if}</span
-							>
-						</div>
-					</button>
-					{#if !collapsed.value}
-						<button
-							onclick={() => (all.value = all.value.filter((todo) => todo.completed === false))}
-							class="p-1 text-sm opacity-70 hover:opacity-90"
-						>
-							<Trash2 class="ml-auto mr-2" size={24} />
-						</button>
-					{/if}
-				</div>
-				{#if !collapsed.value}
-					<ul transition:slide={{ duration: 300 }} class="opacity-60">
-						{#each completed as todo (todo.id)}
-							<li
-								class="mb-2 flex h-12 items-center justify-between rounded-md duration-200 bg-white bg-opacity-50 hover:bg-opacity-60
-							{movedTodo === todo ? 'scale-105 bg-yellow-200' : ''}"
-								onmouseenter={() => (focusedTodo = todo)}
-								onmouseleave={() => {
-									all.saveToLocalStorage();
-									focusedTodo = undefined;
-								}}
-								ondragover={(e) => onDragOver(e, todo)}
-								ondragend={() => (movedTodo = undefined)}
-								ontouchmove={(e) => onTouchMove(e, todo)}
-								ontouchend={(e) => (movedTodo = undefined)}
-							>
-								{#if movedTodo === undefined ? focusedTodo === todo : movedTodo === todo}
-									<button
-										class="flex w-5 flex-shrink-0 items-center justify-center"
-										draggable="true"
-										ondragstart={(e) => onDragStart(e, todo)}
-										ontouchstart={(e) => onTouchStart(e, todo)}
-									>
-										<GripVertical size={24} class="text-black opacity-50 hover:opacity-90" />
-									</button>
-								{:else}
-									<div class="w-5 flex-shrink-0"></div>
-								{/if}
-
-								<button onclick={() => toggleTodo(todo.id)} class="mr-2">
-									<SquareCheck
-										class="opacity-50 hover:fill-yellow-200 hover:text-yellow-800 hover:opacity-90"
-									/>
-								</button>
-
-								<span class="flex-grow">{todo.text}</span>
-								{#if movedTodo === undefined ? focusedTodo === todo : false}
-									<button
-										onclick={() => deleteTodo(todo.id)}
-										class="ml-auto pr-3 text-sm text-white"
-									>
-										<X class="text-black opacity-50 hover:opacity-90" size={24} />
-									</button>
-								{/if}
-							</li>
-						{/each}
-					</ul>
+			<div in:fade={{ duration: 200 }}>
+				<Divider {all} {completed} {dividerIsCollapsed} />
+				{#if !dividerIsCollapsed.value}
+					<div class="opacity-50" in:slide out:slide>
+						<TodoList {all} todos={completed} isChecked={true} canEdit={true} />
+					</div>
 				{/if}
 			</div>
 		{/if}
 	</main>
 </div>
-
-<svelte:window onkeydown={onKeyDown} />
 
 <style>
 	.hippie-bg {
