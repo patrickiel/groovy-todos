@@ -35,7 +35,7 @@
 				<Divider {all} {completed} {dividerIsCollapsed} />
 				{#if !dividerIsCollapsed.value}
 					<div class="opacity-50" in:slide out:slide>
-						<TodoList {all} todos={completed} isChecked={true} canEdit={true} />
+						<TodoList {all} todos={completed} isChecked={true} canEdit={false} />
 					</div>
 				{/if}
 			</div>
